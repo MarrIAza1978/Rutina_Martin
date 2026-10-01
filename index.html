@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f6feb">
+<title>Tareas de Martín</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1b2430;--mu:#6b7686;--pr:#1f6feb;--ok:#1a9d55;--bad:#d64545;--bd:#e3e8ef}
+@media(prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#18202b;--tx:#e8edf3;--mu:#97a3b3;--bd:#27313f}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:72px}
+header{background:var(--pr);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:20px}header small{opacity:.9}
+main{max-width:720px;margin:0 auto;padding:12px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.nav button{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:8px 14px;font-size:16px}
+.nav b{text-align:center;text-transform:capitalize}
+.bar{height:12px;background:var(--bd);border-radius:8px;overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+h2{font-size:14px;color:var(--mu);margin:14px 4px 6px;text-transform:uppercase;letter-spacing:.04em}
+.task{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bd)}
+.task:last-child{border:0}
+.task input[type=checkbox]{width:26px;height:26px;accent-color:var(--ok);flex:none;margin-top:2px}
+.task .t{flex:1;line-height:1.3}.task.done .t{text-decoration:line-through;color:var(--mu)}
+.cam{background:none;border:1px solid var(--bd);border-radius:10px;padding:6px 10px;font-size:18px;color:var(--tx)}
+.th{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)}
+.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd)}
+.tabs button{flex:1;padding:14px 4px;border:0;background:none;color:var(--mu);font-size:15px;font-weight:600}
+.tabs button.on{color:var(--pr);border-top:3px solid var(--pr)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 3px;text-align:center;border-bottom:1px solid var(--bd)}td:first-child,th:first-child{text-align:left;width:46%}
+.y{color:var(--ok);font-weight:700}.n{color:var(--bad)}.s{color:var(--mu)}
+.wrap{overflow-x:auto}
+button.p{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-size:15px;margin:4px 4px 0 0}
+button.g{background:#25d366}
+textarea{width:100%;min-height:220px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);padding:10px;font:14px/1.4 system-ui}
+.big{font-size:34px;font-weight:800}
+.imgv{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:9}
+.imgv img{max-width:94%;max-height:94%}
+</style>
+</head>
+<body>
+<header><h1>🏠 Tareas de Martín Arriaza</h1><small id="sub"></small></header>
+<main id="app"></main>
+<div class="tabs"><button data-v="hoy" class="on">✅ Hoy</button><button data-v="sem">📅 Semana</button><button data-v="rep">📝 Reporte</button></div>
+<div class="imgv" id="iv" onclick="this.style.display='none'"><img id="ivi"></div>
+
+<script>
+/* ====== EDITA AQUÍ LAS TAREAS ======
+ d = días en que aplica (0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb). Sin 'd' = todos los días */
+const TASKS=[
+ {id:'p1',z:'Primer piso · Pieza',t:'Ventilar la pieza por la mañana'},
+ {id:'p2',z:'Primer piso · Pieza',t:'Ordenar pieza al llegar del colegio: nada en el suelo, toallas ordenadas'},
+ {id:'p3',z:'Primer piso · Pieza',t:'Hacer la cama'},
+ {id:'p4',z:'Primer piso · Pieza',t:'Ropa sucia en el canasto y ropa limpia doblada'},
+ {id:'p5',z:'Primer piso · Pieza',t:'Barrer la pieza'},
+ {id:'c1',z:'Primer piso · Cocina',t:'Sin loza sucia en mesones; platos y artefactos ordenados'},
+ {id:'c2',z:'Primer piso · Cocina',t:'Revisar y sacar la basura'},
+ {id:'c3',z:'Primer piso · Cocina',t:'Identificar comida que falta'},
+ {id:'c4',z:'Primer piso · Cocina',t:'Barrer la cocina (cada dos días)',d:[1,3,5,0]},
+ {id:'b1',z:'Primer piso · Baño',t:'Limpiar WC, ducha y lavamanos; sacar basura; todo ordenado'},
+ {id:'l1',z:'Primer piso · Living comedor',t:'Trapear piso del primer piso y comedor; living ordenado',d:[6]},
+ {id:'k1',z:'Compras y casa',t:'Compras de la semana (revisar lo que falta)',d:[5]},
+ {id:'k2',z:'Compras y casa',t:'Ventilar equipo deportivo (día de entrenamiento)',d:[2,4]},
+ {id:'k3',z:'Compras y casa',t:'Lavar ropa, colgar y secar',d:[1,3,5]},
+ {id:'k4',z:'Compras y casa',t:'Limpiar refrigerador: suciedad y alimentos vencidos',d:[0]},
+ {id:'s1',z:'Segundo piso',t:'Lavar la loza del segundo piso después de comer'},
+ {id:'y1',z:'Patio',t:'Limpiar el patio y botar la basura (fin de semana)',d:[6,0]},
+ {id:'y2',z:'Patio',t:'Limpiar el patio y botar la basura (entre semana)',d:[3]}
+];
+const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+/* ===== utilidades ===== */
+const $=s=>document.querySelector(s);
+const iso=d=>{const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())};
+const fromIso=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const addD=(s,n)=>{const d=fromIso(s);d.setDate(d.getDate()+n);return iso(d)};
+const sched=(t,s)=>!t.d||t.d.includes(fromIso(s).getDay());
+const long=s=>fromIso(s).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+const monday=s=>{const d=fromIso(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+let today=iso(new Date()),cur=today,view='hoy';
+let db={};try{db=JSON.parse(localStorage.getItem('martin')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('martin',JSON.stringify(db))}catch(e){}};
+const isDone=(d,id)=>!!(db[d]&&db[d][id]);
+const stats=d=>{const l=TASKS.filter(t=>sched(t,d));const k=l.filter(t=>isDone(d,t.id)).length;return{k,n:l.length,p:l.length?Math.round(100*k/l.length):0}};
+/* ===== fotos en IndexedDB ===== */
+let _db;const idb=()=>_db||(_db=new Promise((ok,no)=>{const r=indexedDB.open('martin-fotos',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>ok(r.result);r.onerror=no}));
+const tx=async(m,f)=>{const d=await idb();return new Promise((ok,no)=>{const r=f(d.transaction('f',m).objectStore('f'));r.onsuccess=()=>ok(r.result);r.onerror=no})};
+const getP=(d,id)=>tx('readonly',s=>s.get(d+'|'+id)).then(v=>v||[]).catch(()=>[]);
+const setP=(d,id,a)=>tx('readwrite',s=>s.put(a,d+'|'+id));
+function shrink(file){return new Promise(ok=>{const im=new Image();im.onload=()=>{const m=900,r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*r;c.height=im.height*r;c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.65))};im.src=URL.createObjectURL(file)})}
+async function addPhoto(id,file){if(!file)return;const a=await getP(cur,id);a.push(await shrink(file));await setP(cur,id,a);if(!isDone(cur,id))toggle(id,true);else render()}
+function toggle(id,v){db[cur]=db[cur]||{};if(v)db[cur][id]=Date.now();else delete db[cur][id];save();render()}
+async function delPhoto(id,i){if(!confirm('¿Borrar esta foto?'))return;const a=await getP(cur,id);a.splice(i,1);await setP(cur,id,a);render()}
+function show(src){$('#ivi').src=src;$('#iv').style.display='flex'}
+/* ===== vistas ===== */
+function render(){
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+ const w=stats(cur);$('#sub').textContent='Hoy: '+w.k+'/'+w.n+' tareas ('+w.p+'%)';
+ ({hoy:vHoy,sem:vSem,rep:vRep})[view]();
+}
+const nav=()=>`<div class="nav"><button onclick="go(-1)">◀</button><b>${long(cur)}${cur===today?' (hoy)':''}</b><button onclick="go(1)">▶</button></div>`;
+function go(n){cur=addD(cur,n);render()}
+function vHoy(){
+ const s=stats(cur);let h=nav()+`<div class="card"><b>Cumplimiento del día: ${s.p}%</b> <span class="s">(${s.k} de ${s.n})</span><div class="bar"><i style="width:${s.p}%"></i></div></div>`;
+ let z='';
+ TASKS.filter(t=>sched(t,cur)).forEach(t=>{
+  if(t.z!==z){if(z)h+='</div>';z=t.z;h+=`<h2>${z}</h2><div class="card">`}
+  const dn=isDone(cur,t.id);
+  h+=`<div class="task ${dn?'done':''}"><input type="checkbox" ${dn?'checked':''} onchange="toggle('${t.id}',this.checked)"><div class="t">${t.t}<div class="th" id="ph-${t.id}"></div></div><label class="cam">📷<input type="file" accept="image/*" capture="environment" hidden onchange="addPhoto('${t.id}',this.files[0]);this.value=''"></label></div>`});
+ $('#app').innerHTML=h+'</div>';
+ TASKS.filter(t=>sched(t,cur)).forEach(async t=>{const a=await getP(cur,t.id),e=$('#ph-'+t.id);if(e)e.innerHTML=a.map((s,i)=>`<img src="${s}" onclick="show(this.src)" oncontextmenu="delPhoto('${t.id}',${i});return false" ondblclick="delPhoto('${t.id}',${i})">`).join('')});
+}
+function vSem(){
+ const m=monday(cur),days=[0,1,2,3,4,5,6].map(i=>addD(m,i));
+ let tot=0,ok=0;days.forEach(d=>{if(d<=today){const s=stats(d);tot+=s.n;ok+=s.k}});
+ const wp=tot?Math.round(100*ok/tot):0;
+ let h=`<div class="nav"><button onclick="cur=addD(cur,-7);render()">◀</button><b>Semana del ${fromIso(m).toLocaleDateString('es-CL',{day:'numeric',month:'short'})}</b><button onclick="cur=addD(cur,7);render()">▶</button></div>`;
+ h+=`<div class="card"><div class="big">${wp}%</div>cumplimiento semanal (${ok} de ${tot} tareas hasta hoy)<div class="bar"><i style="width:${wp}%"></i></div></div>`;
+ h+=`<div class="card wrap"><table><tr><th>Tarea</th>${days.map(d=>`<th>${DN[fromIso(d).getDay()]}<br>${fromIso(d).getDate()}</th>`).join('')}</tr>`;
+ TASKS.forEach(t=>{h+=`<tr><td>${t.t.split(':')[0].split(' (')[0]}</td>`+days.map(d=>!sched(t,d)?'<td class="s">·</td>':isDone(d,t.id)?'<td class="y">✔</td>':d<today?'<td class="n">✘</td>':'<td class="s">○</td>').join('')+'</tr>'});
+ h+=`<tr><td><b>% día</b></td>${days.map(d=>`<td><b>${d<=today?stats(d).p+'%':'–'}</b></td>`).join('')}</tr></table></div><p class="s" style="font-size:12px">✔ hecho · ✘ no hecho · ○ pendiente · · no aplica ese día</p>`;
+ $('#app').innerHTML=h;
+}
+function repText(d){
+ const s=stats(d),L=TASKS.filter(t=>sched(t,d));
+ let x=`📋 Reporte de Martín Arriaza\n${long(d)}\nCumplimiento: ${s.p}% (${s.k}/${s.n})\n\n✅ Hecho:\n`;
+ x+=(L.filter(t=>isDone(d,t.id)).map(t=>'• '+t.t).join('\n')||'• (nada aún)');
+ x+='\n\n❌ Pendiente:\n'+(L.filter(t=>!isDone(d,t.id)).map(t=>'• '+t.t).join('\n')||'• (todo completo 🎉)');
+ const m=monday(d);let tot=0,ok=0;for(let i=0;i<7;i++){const q=addD(m,i);if(q<=today){const r=stats(q);tot+=r.n;ok+=r.k}}
+ return x+`\n\n📅 Semana: ${tot?Math.round(100*ok/tot):0}% (${ok}/${tot})`;
+}
+function vRep(){
+ $('#app').innerHTML=nav()+`<div class="card"><textarea id="rt" readonly>${repText(cur)}</textarea><button class="p" onclick="navigator.clipboard.writeText($('#rt').value);this.textContent='¡Copiado!'">📋 Copiar</button><button class="p g" onclick="window.open('https://wa.me/?text='+encodeURIComponent($('#rt').value))">WhatsApp</button><button class="p" onclick="window.print()">🖨 Imprimir</button></div>
+ <div class="card"><b>Respaldo</b><p class="s" style="font-size:13px">Los datos quedan guardados en este celular/navegador. Descarga un respaldo de los checks de vez en cuando.</p><button class="p" onclick="bk()">⬇ Descargar respaldo</button><label class="p" style="display:inline-block;background:var(--mu);border-radius:10px;padding:10px 14px">⬆ Restaurar<input type="file" accept=".json" hidden onchange="rs(this.files[0])"></label></div>`;
+}
+function bk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download='respaldo-martin-'+today+'.json';a.click()}
+function rs(f){if(!f)return;f.text().then(t=>{try{db=JSON.parse(t);save();render();alert('Restaurado')}catch(e){alert('Archivo inválido')}})}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
+render();
+</script>
+</body>
+</html>
